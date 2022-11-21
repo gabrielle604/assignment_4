@@ -54,19 +54,23 @@ Scatterplot of the data
 fish_scatter <- ggplot(fish, aes(x = protein, y = growth, color = species)) +
   geom_point() +
   labs(x = "Protein (kcal/pellet)", y = "Growth (g/day)") +
-  
-  theme_minimal() 
+  theme_minimal()
 
 fish_scatter
 ```
+From this scatterplot, we can see that there is a linear relationship between protein and the growth of the fish
 
-### Aside about correlation
-#### Pearson, most common
-- looking at correlation between height and volume of trees
-- is the correlation different than zero
-- "0" means that volume is not related to height at all
-- "1" perfectly positively correlated
-- "-1" perfectly negatively correlated
+Now, is there a different effect for the different species?
+
+
+
+An aside about correlation
+- Pearson, most common
+  - looking at correlation between protein and growth of fish
+  - is the correlation different than zero
+  - "0" means that volume is not related to height at all
+  - "1" perfectly positively correlated
+  - "-1" perfectly negatively correlated
 
 ```{r, results=TRUE}
 fish$protein <- as.numeric(fish$protein)
@@ -76,3 +80,86 @@ summary(fish)
 cor.test(fish$protein, fish$growth, method = "pearson")
 ```
 
+cor = 0.825091
+This means that there is a substantial positive correlation between the amount of protein received and the growth of the fish
+
+
+
+### Suite of Models
+
+```{r}
+m_0 <- lm(growth ~ 1, data=fish) # mean only model
+
+m_1a <- lm(growth ~ protein, data=fish) # Simple linear regression
+
+m_1b <- lm(growth ~ species, data=fish) # Simple linear regression
+
+m_1c <- lm(growth ~ species + protein, data=fish) # Simple linear regression
+
+m_1d <- lm(growth ~ species * protein, data=fish) # Simple linear regression
+
+m_2a <- lm(growth ~ -1 + protein + I(protein^2), data=fish) # 2nd degree polynomial no constant (intercept)
+## I = "as is" command
+## run a command without actually changing or adding a variable to the data set
+
+m_2a <- lm(growth ~ -1 + protein + I(protein^2), data=fish)
+
+m_2b <- lm(growth ~ protein + I(protein^2), data=fish)
+
+m_3 <- lm(growth ~ protein + I(protein^2) + I(protein^3), data=fish)
+
+
+BIC_list <- c(BIC(m_0), BIC(m_1a), BIC(m_1b), BIC(m_1c), BIC(m_1d), BIC(m_2a), BIC(m_2b), BIC(m_3))
+
+model_output <-rbind(data.frame(glance(m_0)),data.frame(glance(m_1a)),data.frame(glance(m_1b)),data.frame(glance(m_1c)),data.frame(glance(m_1d)),data.frame(glance(m_2a)),data.frame(glance(m_2b)), data.frame(glance(m_3))) %>% select(BIC) 
+
+model_output <- mutate(model_output, delta.BIC = BIC-min(BIC_list))
+model_output$model<-c("Model 0","Model 1a","Model 1b","Model 1c","Model 1d", "Model 2a","Model 2b", "Model 3")
+model_output<-model_output[,c("model", "BIC", "delta.BIC" )]
+
+
+kable(model_output, format = "markdown", digits = 3, caption = "BIC, and Delta.BIC for the IDF models. Delta BIC > 7 indicates models that should be dismissed from further consideration.")
+
+```
+Model 1d has the lowest BIC value (132.027), so it is the best model. It is showing the interaction between the species and the protein given, and the effect on growth of the fish
+
+```{r}
+m_1d <- lm(growth ~ species * protein, data=fish) # Simple linear regression
+
+m_1d_out <- summary(m_1d)
+m_1d_out
+```
+
+
+g = -1.92 + 0.05(protein) + 2.25(Sp.NIT) - 9.47(AS) - 0.034(Pro * Sp.NIT) + 0.03(protein * AS)
+
+
+The equation for rainbow trout (the reference species)
+g = -1.92 + 0.05(protein)
+
+The equation for Oreochromis niloticus
+g = -1.92 + 0.05(protein) + 2.25 - 9.47(AS) - 0.034(protein)
+COMBINE FACTORS
+g = 0.33 - 0.016(protein)
+
+The equation for Salmo salar
+g = -1.92 + 0.05(protein) - 9.47 + 0.03(protein)
+COMBINE FACTORS
+g = -11.39 + 0.08(protein)
+
+
+
+
+
+
+
+Note from lab from Chris ---
+- the growth can be negative, so we don't have much reason to force the intercept through zero
+- one starts to plateau? at some point, the fish can't take in any more protein
+- what about the fish that was starved? get rid of that data, and then re-run the model and see if anything changes (the two should stay the same!!)
+
+- checking for outliers with single linear regression models
+- cook's distance... is it an outlier? evaluate it in the model itself
+    - does the intercept and slope change?
+    
+- what is the impact on y? think about the 500 acre feet water question from the quiz
