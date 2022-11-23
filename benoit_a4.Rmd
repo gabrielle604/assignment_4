@@ -5,6 +5,9 @@ date: '2022-11-09'
 output: 
   html_document:
     code_folding: hide
+editor_options: 
+  markdown: 
+    wrap: 72
 ---
 
 ```{r setup, include=FALSE}
@@ -17,12 +20,40 @@ library(broom) # used to make tables
 library(knitr) # used to make table
 ```
 
-## Juvenile Salmo Salar 
+QUESTION (1): Is the relationship of fish growth to protein
+concentration in the feed the same for each species?
+
+-   If the relationship of fish growth to protein concentration in the
+    feed is NOT the same for each species ...
+
+QUESTION (2): What is the formula to predict the average growth for
+different concentrations of protein for each species.
+
+Of note:
+
+-   the starting mass:
+
+    -   300 g for juvenile Salmo salar
+
+    -   300 g for Oncorhynchus mykiss
+
+    -   150 g for juvenile Oreochromis niloticus
+
+-   the fish were monitored in individual 25 liter holding tanks with
+    flow through water systems for 7 days
+
+-   all fish survived the study except one (the Salmo salar individual
+    fed a zero protein diet died after 4 days)
+
+#### Here is a photo of a Juvenile Salmo Salar
+
 ![](http://www.ejpau.media.pl/articles/volume15/issue1/art-02_1.jpg)
 
-#### Load in the data + clean it:
-- Three species of fish
-- The fish growth (g/day) for different concentrations of protein feed (kcal/pellet)
+##### Load in the data + clean it:
+
+-   Three species of fish
+-   The fish growth (g/day) for different concentrations of protein feed
+    (kcal/pellet)
 
 ```{r}
 fish_growth <- read_csv(here("data","fish_growth.csv"))
@@ -31,48 +62,29 @@ fish_growth <- read_csv(here("data","fish_growth.csv"))
 fish <- fish_growth %>% clean_names()
 ```
 
-QUESTION (1): Is the relationship of fish growth to protein concentration in the feed the same for each species?
+##### Scatterplot of the data to visually inpect it:
 
-- If the relationship of fish growth to protein concentration in the feed is NOT the same for each species ...
-
-QUESTION (2): What is the formula to predict the average growth for different concentrations of protein for each species. 
-
-
-NOTE: 
-- use multiple linear regression 
-- the starting mass:
-      - 300 g for juvenile Salmo salar
-      - 300 g for Oncorhynchus mykiss
-      - 150 g for juvenile Oreochromis niloticus
-- the fish were monitored in individual 25 liter holding tanks with flow through water systems for 7 days
-- all fish survived the study except one (the Salmo salar individual fed a zero protein diet died after 4 days)
-
-
-Scatterplot of the data
-```{r fish_1, fig.align='center',fig.cap="Figure 1. Scatterplot of the relationship between each species' amount of protein received and their growth"}
+```{r fish_1, fig.align='center',fig.cap="Figure 1. Scatterplot of the relationship between each species' amount of protein received and their subsequent growth."}
 
 fish_scatter <- ggplot(fish, aes(x = protein, y = growth, color = species)) +
   geom_point() +
+  geom_smooth(method = "lm") +
   labs(x = "Protein (kcal/pellet)", y = "Growth (g/day)") +
   theme_minimal()
 
 fish_scatter
 ```
-From this scatterplot, we can see that there is a linear relationship between protein and the growth of the fish
 
-Now, is there a different effect for the different species?
+From this scatterplot, we can see that there is a linear relationship
+between protein and the growth of the fish.
 
+Also, we can double check the strength of this relationship by analyzing
+the Pearson's correlation. For this data, the correlation between
+protein and the growth of the fish is: cor = 0.825091 This means that
+there is a substantial positive correlation between the amount of
+protein received and the growth of the fish.
 
-
-An aside about correlation
-- Pearson, most common
-  - looking at correlation between protein and growth of fish
-  - is the correlation different than zero
-  - "0" means that volume is not related to height at all
-  - "1" perfectly positively correlated
-  - "-1" perfectly negatively correlated
-
-```{r, results=TRUE}
+```{r, results=FALSE}
 fish$protein <- as.numeric(fish$protein)
 fish$growth <- as.numeric(fish$growth)
 summary(fish)
@@ -80,14 +92,9 @@ summary(fish)
 cor.test(fish$protein, fish$growth, method = "pearson")
 ```
 
-cor = 0.825091
-This means that there is a substantial positive correlation between the amount of protein received and the growth of the fish
+#### Now, we will investigate whether there is a different effect for the different species through creating a suite of models
 
-
-
-### Suite of Models
-
-```{r}
+```{r, results = TRUE}
 m_0 <- lm(growth ~ 1, data=fish) # mean only model
 
 m_1a <- lm(growth ~ protein, data=fish) # Simple linear regression
@@ -97,6 +104,7 @@ m_1b <- lm(growth ~ species, data=fish) # Simple linear regression
 m_1c <- lm(growth ~ species + protein, data=fish) # Simple linear regression
 
 m_1d <- lm(growth ~ species * protein, data=fish) # Simple linear regression
+# need a constant in the interaction term; that is why we keep the "species*protein" so that the reference fish has a value
 
 m_2a <- lm(growth ~ -1 + protein + I(protein^2), data=fish) # 2nd degree polynomial no constant (intercept)
 ## I = "as is" command
@@ -121,7 +129,39 @@ model_output<-model_output[,c("model", "BIC", "delta.BIC" )]
 kable(model_output, format = "markdown", digits = 3, caption = "BIC, and Delta.BIC for the IDF models. Delta BIC > 7 indicates models that should be dismissed from further consideration.")
 
 ```
-Model 1d has the lowest BIC value (132.027), so it is the best model. It is showing the interaction between the species and the protein given, and the effect on growth of the fish
+
+Model 1d has the lowest BIC value (132.027) of all the models, so it is
+the best fitting model. It is showing the interaction between the
+species and the protein given, and the effect on growth of the fish. We
+considered more flexible quadratic models, but they're not performing
+well, and therefore we did not select to move forward with them.
+
+
+```{r, results = TRUE}
+# we may want to merge data and select only certain model statistics. 
+# here is a way to manipulate the data to get a table
+
+model_output_a <-rbind(data.frame(glance(m_0)),data.frame(glance(m_1a)),data.frame(glance(m_1b)),data.frame(glance(m_1c)),data.frame(glance(m_1d)),data.frame(glance(m_2a)),data.frame(glance(m_2b)), data.frame(glance(m_3))) %>% select(adj.r.squared, BIC) 
+
+model_output_a
+
+model_output_b <- mutate(model_output_a, delta.BIC = BIC-min(BIC_list))
+
+model_output_b
+
+# add a column that labels each model within the table!
+model_output_b$model <- c("Model 0", "Model 1a", "Model 1b", "Model 1c", "Model 1d", "Model 2a,", "Model 2b", "Model 3")
+
+model_output_b
+
+# rearrange the order of the columns
+model_output_b <- model_output_b[,c("model", "adj.r.squared", "BIC", "delta.BIC")]
+model_output_b
+
+# even though adj.r.squared is a frequentist term, it is still informative
+
+kable(model_output_b, format = "markdown", digits = 3, caption = "R-Squared Adjusted, BIC, and delta BIC for the fish models. Delta BIC >7 indicates models that should be dismissed from further consideration.")
+```
 
 ```{r}
 m_1d <- lm(growth ~ species * protein, data=fish) # Simple linear regression
@@ -130,36 +170,184 @@ m_1d_out <- summary(m_1d)
 m_1d_out
 ```
 
+#### The model equation:
 
-g = -1.92 + 0.05(protein) + 2.25(Sp.NIT) - 9.47(AS) - 0.034(Pro * Sp.NIT) + 0.03(protein * AS)
+g = -1.92 + 0.05(protein) + 2.25(Sp.NIT) - 9.47(AS) - 0.034(Pro \*
+Sp.NIT) + 0.03(protein \* AS)
+
+#### The equations for each species using Model 1d:
+
+The equation for rainbow trout (the reference species) g = -1.92 +
+0.05(protein)
+
+The equation for Oreochromis niloticus g = -1.92 + 0.05(protein) +
+2.25 - 9.47(AS) - 0.034(protein)
+
+COMBINE FACTORS g = 0.33 - 0.016(protein)
+
+The equation for Salmo salar g = -1.92 + 0.05(protein) - 9.47 +
+0.03(protein)
+
+COMBINE FACTORS g = -11.39 + 0.08(protein)
+
+#### Figure for the best fitting model:
+
+```{r fish_2, fig.align='center',fig.cap="Figure 2. Growth (kcal/day) regressed on the interaction of each fish species and the amount of protein (g/day) received."}
+
+m_1d <- lm(growth ~ species * protein, data=fish)
 
 
-The equation for rainbow trout (the reference species)
+fig_m1d <- ggplot(fish, aes(x = protein, y = growth, color = species)) + 
+  geom_point() +
+  geom_smooth() +
+  labs(x = "Protein (g/day)", y = "Growth (kcal/pellet)") +
+  theme_minimal() +
+  stat_smooth(method = "lm", formula = lm(growth ~ species * protein, data=fish), se = FALSE)
+
+fig_m1d
+
+
+```
+
+
+We have deliberately chosen to keep the intercept for these models. Growth cannot be negative, so we don't have much reason to force the intercept through zero. However, we do observe that two of the fish species start to plateau as they approach 20 g/day of protein. Here we hypothesize that at some point, the fish can't take in any more protein. 
+As for the fish that was withheld protein, and therefore, starved, we will explore this data as outlier. In the following analysis, we eliminate the data for Salmo Salar, re-run the model, and note any changes (we expect Oncorhynchus mykiss and Oreochromis niloticus should stay the same).
+
+
+```{r}
+
+twofish_growth <- read_csv(here("data","fish_growth.csv"))
+
+# use janitor() and clean up the names
+twofish <- fish_growth %>% clean_names() %>% filter(species == "Oreochromis niloticus" | species == "Oncorhynchus mykiss")
+
+##### Scatterplot of the data to visually inpect it:
+fish_scatter_2 <- ggplot(twofish, aes(x = protein, y = growth, color = species)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  labs(x = "Protein (kcal/pellet)", y = "Growth (g/day)") +
+  theme_minimal()
+
+fish_scatter_2
+
+```
+
+#### Models run without the starved fish
+
+```{r, results = TRUE}
+m_0_two <- lm(growth ~ 1, data=twofish) # mean only model
+
+m_1a_two <- lm(growth ~ protein, data=twofish) # Simple linear regression
+
+m_1b_two <- lm(growth ~ species, data=twofish) # Simple linear regression
+
+m_1c_two <- lm(growth ~ species + protein, data=twofish) # Simple linear regression
+
+m_1d_two <- lm(growth ~ species * protein, data=twofish) # Simple linear regression
+# need a constant in the interaction term; that is why we keep the "species*protein" so that the reference fish has a value
+
+m_2a_two <- lm(growth ~ -1 + protein + I(protein^2), data=twofish) # 2nd degree polynomial no constant (intercept)
+## I = "as is" command
+## run a command without actually changing or adding a variable to the data set
+
+m_2a_two <- lm(growth ~ -1 + protein + I(protein^2), data=twofish)
+
+m_2b_two <- lm(growth ~ protein + I(protein^2), data=twofish)
+
+m_3_two <- lm(growth ~ protein + I(protein^2) + I(protein^3), data=twofish)
+
+
+BIC_list <- c(BIC(m_0_two), BIC(m_1a_two), BIC(m_1b_two), BIC(m_1c_two), BIC(m_1d_two), BIC(m_2a_two), BIC(m_2b_two), BIC(m_3_two))
+
+model_output_two <-rbind(data.frame(glance(m_0_two)),data.frame(glance(m_1a_two)),data.frame(glance(m_1b_two)),data.frame(glance(m_1c_two)),data.frame(glance(m_1d_two)),data.frame(glance(m_2a_two)),data.frame(glance(m_2b_two)), data.frame(glance(m_3_two))) %>% select(BIC) 
+
+model_output_two <- mutate(model_output_two, delta.BIC = BIC-min(BIC_list))
+model_output_two$model<-c("Model 0","Model 1a","Model 1b","Model 1c","Model 1d", "Model 2a","Model 2b", "Model 3")
+model_output_two<-model_output_two[,c("model", "BIC", "delta.BIC" )]
+
+
+kable(model_output_two, format = "markdown", digits = 3, caption = "BIC, and Delta.BIC for the IDF models. Delta BIC > 7 indicates models that should be dismissed from further consideration.")
+
+```
+
+Model 1d still has the lowest BIC value, even when taking out the starved fish.
+
+```{r, results = TRUE}
+# we may want to merge data and select only certain model statistics. 
+# here is a way to manipulate the data to get a table
+
+model_output_a_two <-rbind(data.frame(glance(m_0_two)),data.frame(glance(m_1a_two)),data.frame(glance(m_1b_two)),data.frame(glance(m_1c_two)),data.frame(glance(m_1d_two)),data.frame(glance(m_2a_two)),data.frame(glance(m_2b_two)), data.frame(glance(m_3_two))) %>% select(adj.r.squared, BIC) 
+
+model_output_a_two
+
+model_output_b_two <- mutate(model_output_a_two, delta.BIC = BIC-min(BIC_list))
+
+model_output_b_two
+
+# add a column that labels each model within the table!
+model_output_b_two$model <- c("Model 0", "Model 1a", "Model 1b", "Model 1c", "Model 1d", "Model 2a,", "Model 2b", "Model 3")
+
+model_output_b_two
+
+# rearrange the order of the columns
+model_output_b_two <- model_output_b_two[,c("model", "adj.r.squared", "BIC", "delta.BIC")]
+model_output_b_two
+
+# even though adj.r.squared is a frequentist term, it is still informative
+
+kable(model_output_b_two, format = "markdown", digits = 3, caption = "R-Squared Adjusted, BIC, and delta BIC for the fish models WITHOUT the starved fish (Salmo salar). Delta BIC >7 indicates models that should be dismissed from further consideration.")
+```
+
+Checking for outliers with single linear regression models
+```{r}
+# use janitor() and clean up the names
+salmo <- fish_growth %>% clean_names() %>% filter(species == "Salmo salar")
+
+oreo <- fish_growth %>% clean_names() %>% filter(species == "Oreochromis niloticus")
+
+onco <- fish_growth %>% clean_names() %>% filter(species == "Oncorhynchus mykiss")
+
+# Salmo salar
+model_salmo <- lm(growth ~ protein, data = salmo) 
+
+summary(model_salmo)
+
+# Oncorhynchus mykiss 
+model_oreo <- lm(growth ~ protein, data = oreo) 
+
+summary(model_oreo)
+
+# Oreochromis niloticus
+model_onco <- lm(growth ~ protein, data = onco) 
+
+summary(model_onco)
+
+# the command "plot(model_salmo)" "plot(model_oreo)" "plot(model_onco)" is showing the residuals versus fitted
+
+```
+
+
+Observations #1, #5, #10, and possibly #9(for model onco), could be outliers. However, for observation #1, all the fish were not given any protein, so it is understandable that on that day, their growth declined and is an outlier, due to all the other days two of the fish species did receive protein in some amount. For observations #9 and #10, what we are observing is possibly that there is a certain amount of protein the fish can intake, and if you give them more than that, they simply can't consume it, so therefore it does not lead to further growth. Observation #5 might be showing up as an outlier because when examinging the data, it is observed that there is a substantial amount of growth associated with this observation, across the board!
+
+Therefore, given the above rational, we don't think there is enough motivation to take the potential outliers out. 
+
+
+FINAL ANSWER: 
+
+#### The formula to predict the average growth for different concentrations of protein for each species. is:
+g = -1.92 + 0.05(protein) + 2.25(Sp.NIT) - 9.47(AS) - 0.034(Pro \*
+Sp.NIT) + 0.03(protein \* AS)
+
+#### The equation for rainbow trout (the reference species): 
 g = -1.92 + 0.05(protein)
 
-The equation for Oreochromis niloticus
-g = -1.92 + 0.05(protein) + 2.25 - 9.47(AS) - 0.034(protein)
-COMBINE FACTORS
+#### The equation for Oreochromis niloticus: 
 g = 0.33 - 0.016(protein)
 
-The equation for Salmo salar
-g = -1.92 + 0.05(protein) - 9.47 + 0.03(protein)
-COMBINE FACTORS
+#### The equation for Salmo salar:
 g = -11.39 + 0.08(protein)
 
 
+Concerns: there are very few data, one fish was not fed, it is unclear what the the fish were "monitored" for while in individual 25 liter holding tanks with flow through water systems for 7 days, and it is unclear why 7 days was selected. 
 
-
-
-
-
-Note from lab from Chris ---
-- the growth can be negative, so we don't have much reason to force the intercept through zero
-- one starts to plateau? at some point, the fish can't take in any more protein
-- what about the fish that was starved? get rid of that data, and then re-run the model and see if anything changes (the two should stay the same!!)
-
-- checking for outliers with single linear regression models
-- cook's distance... is it an outlier? evaluate it in the model itself
-    - does the intercept and slope change?
-    
-- what is the impact on y? think about the 500 acre feet water question from the quiz
+Caveats: This data and conclusion is applicable for this sample population, however it cannot be extrapolated to other fish in other settings that differ from this one. Other sources of protein might play a role in the growth potential of fish, in addition to water temperature, time of feeding, crowding of the tank/competition for food, among many other factors. 
