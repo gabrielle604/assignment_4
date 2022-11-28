@@ -137,7 +137,7 @@ considered more flexible quadratic models, but they're not performing
 well, and therefore we did not select to move forward with them.
 
 
-```{r, results = TRUE}
+```{r, results = FALSE}
 # we may want to merge data and select only certain model statistics. 
 # here is a way to manipulate the data to get a table
 
@@ -234,7 +234,7 @@ fish_scatter_2
 
 #### Models run without the starved fish
 
-```{r, results = TRUE}
+```{r, results = FALSE}
 m_0_two <- lm(growth ~ 1, data=twofish) # mean only model
 
 m_1a_two <- lm(growth ~ protein, data=twofish) # Simple linear regression
@@ -272,7 +272,7 @@ kable(model_output_two, format = "markdown", digits = 3, caption = "BIC, and Del
 
 Model 1d still has the lowest BIC value, even when taking out the starved fish.
 
-```{r, results = TRUE}
+```{r, results = FALSE}
 # we may want to merge data and select only certain model statistics. 
 # here is a way to manipulate the data to get a table
 

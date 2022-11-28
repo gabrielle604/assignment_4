@@ -616,119 +616,24 @@ well, and therefore we did not select to move forward with them.</p>
 
 model_output_a &lt;-rbind(data.frame(glance(m_0)),data.frame(glance(m_1a)),data.frame(glance(m_1b)),data.frame(glance(m_1c)),data.frame(glance(m_1d)),data.frame(glance(m_2a)),data.frame(glance(m_2b)), data.frame(glance(m_3))) %&gt;% select(adj.r.squared, BIC) 
 
-model_output_a</code></pre>
-<pre><code>##   adj.r.squared      BIC
-## 1   0.000000000 217.0078
-## 2   0.669374293 186.1532
-## 3   0.005321977 221.5063
-## 4   0.726391292 185.0537
-## 5   0.959656244 132.0269
-## 6   0.730046343 192.5849
-## 7   0.678840587 187.5919
-## 8   0.667093635 190.9386</code></pre>
-<pre class="r"><code>model_output_b &lt;- mutate(model_output_a, delta.BIC = BIC-min(BIC_list))
+model_output_a
 
-model_output_b</code></pre>
-<pre><code>##   adj.r.squared      BIC delta.BIC
-## 1   0.000000000 217.0078  84.98083
-## 2   0.669374293 186.1532  54.12624
-## 3   0.005321977 221.5063  89.47937
-## 4   0.726391292 185.0537  53.02676
-## 5   0.959656244 132.0269   0.00000
-## 6   0.730046343 192.5849  60.55792
-## 7   0.678840587 187.5919  55.56493
-## 8   0.667093635 190.9386  58.91163</code></pre>
-<pre class="r"><code># add a column that labels each model within the table!
+model_output_b &lt;- mutate(model_output_a, delta.BIC = BIC-min(BIC_list))
+
+model_output_b
+
+# add a column that labels each model within the table!
 model_output_b$model &lt;- c(&quot;Model 0&quot;, &quot;Model 1a&quot;, &quot;Model 1b&quot;, &quot;Model 1c&quot;, &quot;Model 1d&quot;, &quot;Model 2a,&quot;, &quot;Model 2b&quot;, &quot;Model 3&quot;)
 
-model_output_b</code></pre>
-<pre><code>##   adj.r.squared      BIC delta.BIC     model
-## 1   0.000000000 217.0078  84.98083   Model 0
-## 2   0.669374293 186.1532  54.12624  Model 1a
-## 3   0.005321977 221.5063  89.47937  Model 1b
-## 4   0.726391292 185.0537  53.02676  Model 1c
-## 5   0.959656244 132.0269   0.00000  Model 1d
-## 6   0.730046343 192.5849  60.55792 Model 2a,
-## 7   0.678840587 187.5919  55.56493  Model 2b
-## 8   0.667093635 190.9386  58.91163   Model 3</code></pre>
-<pre class="r"><code># rearrange the order of the columns
+model_output_b
+
+# rearrange the order of the columns
 model_output_b &lt;- model_output_b[,c(&quot;model&quot;, &quot;adj.r.squared&quot;, &quot;BIC&quot;, &quot;delta.BIC&quot;)]
-model_output_b</code></pre>
-<pre><code>##       model adj.r.squared      BIC delta.BIC
-## 1   Model 0   0.000000000 217.0078  84.98083
-## 2  Model 1a   0.669374293 186.1532  54.12624
-## 3  Model 1b   0.005321977 221.5063  89.47937
-## 4  Model 1c   0.726391292 185.0537  53.02676
-## 5  Model 1d   0.959656244 132.0269   0.00000
-## 6 Model 2a,   0.730046343 192.5849  60.55792
-## 7  Model 2b   0.678840587 187.5919  55.56493
-## 8   Model 3   0.667093635 190.9386  58.91163</code></pre>
-<pre class="r"><code># even though adj.r.squared is a frequentist term, it is still informative
+model_output_b
+
+# even though adj.r.squared is a frequentist term, it is still informative
 
 kable(model_output_b, format = &quot;markdown&quot;, digits = 3, caption = &quot;R-Squared Adjusted, BIC, and delta BIC for the fish models. Delta BIC &gt;7 indicates models that should be dismissed from further consideration.&quot;)</code></pre>
-<table>
-<caption>R-Squared Adjusted, BIC, and delta BIC for the fish models.
-Delta BIC &gt;7 indicates models that should be dismissed from further
-consideration.</caption>
-<thead>
-<tr class="header">
-<th align="left">model</th>
-<th align="right">adj.r.squared</th>
-<th align="right">BIC</th>
-<th align="right">delta.BIC</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td align="left">Model 0</td>
-<td align="right">0.000</td>
-<td align="right">217.008</td>
-<td align="right">84.981</td>
-</tr>
-<tr class="even">
-<td align="left">Model 1a</td>
-<td align="right">0.669</td>
-<td align="right">186.153</td>
-<td align="right">54.126</td>
-</tr>
-<tr class="odd">
-<td align="left">Model 1b</td>
-<td align="right">0.005</td>
-<td align="right">221.506</td>
-<td align="right">89.479</td>
-</tr>
-<tr class="even">
-<td align="left">Model 1c</td>
-<td align="right">0.726</td>
-<td align="right">185.054</td>
-<td align="right">53.027</td>
-</tr>
-<tr class="odd">
-<td align="left">Model 1d</td>
-<td align="right">0.960</td>
-<td align="right">132.027</td>
-<td align="right">0.000</td>
-</tr>
-<tr class="even">
-<td align="left">Model 2a,</td>
-<td align="right">0.730</td>
-<td align="right">192.585</td>
-<td align="right">60.558</td>
-</tr>
-<tr class="odd">
-<td align="left">Model 2b</td>
-<td align="right">0.679</td>
-<td align="right">187.592</td>
-<td align="right">55.565</td>
-</tr>
-<tr class="even">
-<td align="left">Model 3</td>
-<td align="right">0.667</td>
-<td align="right">190.939</td>
-<td align="right">58.912</td>
-</tr>
-</tbody>
-</table>
 <pre class="r"><code>m_1d &lt;- lm(growth ~ species * protein, data=fish) # Simple linear regression
 
 m_1d_out &lt;- summary(m_1d)
@@ -829,60 +734,6 @@ model_output_two&lt;-model_output_two[,c(&quot;model&quot;, &quot;BIC&quot;, &qu
 
 
 kable(model_output_two, format = &quot;markdown&quot;, digits = 3, caption = &quot;BIC, and Delta.BIC for the IDF models. Delta BIC &gt; 7 indicates models that should be dismissed from further consideration.&quot;)</code></pre>
-<table>
-<caption>BIC, and Delta.BIC for the IDF models. Delta BIC &gt; 7
-indicates models that should be dismissed from further
-consideration.</caption>
-<thead>
-<tr class="header">
-<th align="left">model</th>
-<th align="right">BIC</th>
-<th align="right">delta.BIC</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td align="left">Model 0</td>
-<td align="right">133.014</td>
-<td align="right">61.934</td>
-</tr>
-<tr class="even">
-<td align="left">Model 1a</td>
-<td align="right">118.525</td>
-<td align="right">47.445</td>
-</tr>
-<tr class="odd">
-<td align="left">Model 1b</td>
-<td align="right">131.213</td>
-<td align="right">60.133</td>
-</tr>
-<tr class="even">
-<td align="left">Model 1c</td>
-<td align="right">107.207</td>
-<td align="right">36.127</td>
-</tr>
-<tr class="odd">
-<td align="left">Model 1d</td>
-<td align="right">71.080</td>
-<td align="right">0.000</td>
-</tr>
-<tr class="even">
-<td align="left">Model 2a</td>
-<td align="right">118.681</td>
-<td align="right">47.601</td>
-</tr>
-<tr class="odd">
-<td align="left">Model 2b</td>
-<td align="right">120.725</td>
-<td align="right">49.645</td>
-</tr>
-<tr class="even">
-<td align="left">Model 3</td>
-<td align="right">123.718</td>
-<td align="right">52.638</td>
-</tr>
-</tbody>
-</table>
 <p>Model 1d still has the lowest BIC value, even when taking out the
 starved fish.</p>
 <pre class="r"><code># we may want to merge data and select only certain model statistics. 
@@ -890,119 +741,24 @@ starved fish.</p>
 
 model_output_a_two &lt;-rbind(data.frame(glance(m_0_two)),data.frame(glance(m_1a_two)),data.frame(glance(m_1b_two)),data.frame(glance(m_1c_two)),data.frame(glance(m_1d_two)),data.frame(glance(m_2a_two)),data.frame(glance(m_2b_two)), data.frame(glance(m_3_two))) %&gt;% select(adj.r.squared, BIC) 
 
-model_output_a_two</code></pre>
-<pre><code>##   adj.r.squared       BIC
-## 1     0.0000000 133.01408
-## 2     0.5596480 118.52485
-## 3     0.1695271 131.21327
-## 4     0.7720678 107.20689
-## 5     0.9657550  71.07998
-## 6     0.7798030 118.68146
-## 7     0.5519350 120.72469
-## 8     0.5239990 123.71756</code></pre>
-<pre class="r"><code>model_output_b_two &lt;- mutate(model_output_a_two, delta.BIC = BIC-min(BIC_list))
+model_output_a_two
 
-model_output_b_two</code></pre>
-<pre><code>##   adj.r.squared       BIC delta.BIC
-## 1     0.0000000 133.01408  61.93410
-## 2     0.5596480 118.52485  47.44487
-## 3     0.1695271 131.21327  60.13329
-## 4     0.7720678 107.20689  36.12691
-## 5     0.9657550  71.07998   0.00000
-## 6     0.7798030 118.68146  47.60148
-## 7     0.5519350 120.72469  49.64471
-## 8     0.5239990 123.71756  52.63759</code></pre>
-<pre class="r"><code># add a column that labels each model within the table!
+model_output_b_two &lt;- mutate(model_output_a_two, delta.BIC = BIC-min(BIC_list))
+
+model_output_b_two
+
+# add a column that labels each model within the table!
 model_output_b_two$model &lt;- c(&quot;Model 0&quot;, &quot;Model 1a&quot;, &quot;Model 1b&quot;, &quot;Model 1c&quot;, &quot;Model 1d&quot;, &quot;Model 2a,&quot;, &quot;Model 2b&quot;, &quot;Model 3&quot;)
 
-model_output_b_two</code></pre>
-<pre><code>##   adj.r.squared       BIC delta.BIC     model
-## 1     0.0000000 133.01408  61.93410   Model 0
-## 2     0.5596480 118.52485  47.44487  Model 1a
-## 3     0.1695271 131.21327  60.13329  Model 1b
-## 4     0.7720678 107.20689  36.12691  Model 1c
-## 5     0.9657550  71.07998   0.00000  Model 1d
-## 6     0.7798030 118.68146  47.60148 Model 2a,
-## 7     0.5519350 120.72469  49.64471  Model 2b
-## 8     0.5239990 123.71756  52.63759   Model 3</code></pre>
-<pre class="r"><code># rearrange the order of the columns
+model_output_b_two
+
+# rearrange the order of the columns
 model_output_b_two &lt;- model_output_b_two[,c(&quot;model&quot;, &quot;adj.r.squared&quot;, &quot;BIC&quot;, &quot;delta.BIC&quot;)]
-model_output_b_two</code></pre>
-<pre><code>##       model adj.r.squared       BIC delta.BIC
-## 1   Model 0     0.0000000 133.01408  61.93410
-## 2  Model 1a     0.5596480 118.52485  47.44487
-## 3  Model 1b     0.1695271 131.21327  60.13329
-## 4  Model 1c     0.7720678 107.20689  36.12691
-## 5  Model 1d     0.9657550  71.07998   0.00000
-## 6 Model 2a,     0.7798030 118.68146  47.60148
-## 7  Model 2b     0.5519350 120.72469  49.64471
-## 8   Model 3     0.5239990 123.71756  52.63759</code></pre>
-<pre class="r"><code># even though adj.r.squared is a frequentist term, it is still informative
+model_output_b_two
+
+# even though adj.r.squared is a frequentist term, it is still informative
 
 kable(model_output_b_two, format = &quot;markdown&quot;, digits = 3, caption = &quot;R-Squared Adjusted, BIC, and delta BIC for the fish models WITHOUT the starved fish (Salmo salar). Delta BIC &gt;7 indicates models that should be dismissed from further consideration.&quot;)</code></pre>
-<table>
-<caption>R-Squared Adjusted, BIC, and delta BIC for the fish models
-WITHOUT the starved fish (Salmo salar). Delta BIC &gt;7 indicates models
-that should be dismissed from further consideration.</caption>
-<thead>
-<tr class="header">
-<th align="left">model</th>
-<th align="right">adj.r.squared</th>
-<th align="right">BIC</th>
-<th align="right">delta.BIC</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td align="left">Model 0</td>
-<td align="right">0.000</td>
-<td align="right">133.014</td>
-<td align="right">61.934</td>
-</tr>
-<tr class="even">
-<td align="left">Model 1a</td>
-<td align="right">0.560</td>
-<td align="right">118.525</td>
-<td align="right">47.445</td>
-</tr>
-<tr class="odd">
-<td align="left">Model 1b</td>
-<td align="right">0.170</td>
-<td align="right">131.213</td>
-<td align="right">60.133</td>
-</tr>
-<tr class="even">
-<td align="left">Model 1c</td>
-<td align="right">0.772</td>
-<td align="right">107.207</td>
-<td align="right">36.127</td>
-</tr>
-<tr class="odd">
-<td align="left">Model 1d</td>
-<td align="right">0.966</td>
-<td align="right">71.080</td>
-<td align="right">0.000</td>
-</tr>
-<tr class="even">
-<td align="left">Model 2a,</td>
-<td align="right">0.780</td>
-<td align="right">118.681</td>
-<td align="right">47.601</td>
-</tr>
-<tr class="odd">
-<td align="left">Model 2b</td>
-<td align="right">0.552</td>
-<td align="right">120.725</td>
-<td align="right">49.645</td>
-</tr>
-<tr class="even">
-<td align="left">Model 3</td>
-<td align="right">0.524</td>
-<td align="right">123.718</td>
-<td align="right">52.638</td>
-</tr>
-</tbody>
-</table>
 <p>Checking for outliers with single linear regression models</p>
 <pre class="r"><code># use janitor() and clean up the names
 salmo &lt;- fish_growth %&gt;% clean_names() %&gt;% filter(species == &quot;Salmo salar&quot;)
